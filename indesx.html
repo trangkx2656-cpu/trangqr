@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thanh toán QR</title>
+  <link rel="preconnect" href="https://img.vietqr.io">
+  <style>
+    body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:#0f172a;color:#e5e7eb;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .card{background:#111827;padding:30px;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.4);max-width:450px;width:100%;text-align:center}
+    h1{margin-bottom:25px;font-size:24px}
+    .qr{width:320px;height:320px;border-radius:12px;overflow:hidden;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;background:#fff}
+    .qr img{width:100%;height:100%;object-fit:contain}
+    .info{margin:12px 0;text-align:left;font-size:17px}
+    .row{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
+    .row span{font-weight:500}
+    .row button{padding:6px 14px;font-size:14px;border:none;border-radius:6px;background:#374151;color:#fff;cursor:pointer}
+    .row button:hover{background:#2563eb}
+    input{margin-top:18px;width:72%;padding:14px;font-size:18px;border-radius:10px;border:1px solid #374151;background:#1f2937;color:#fff;text-align:right}
+    input:focus{outline:none;border-color:#2563eb}
+    .makeQR{padding:14px 18px;margin-left:10px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-weight:600;font-size:16px;cursor:pointer}
+    .makeQR:hover{background:#15803d}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Thanh toán QR để được gọi video với em Lê Thị Trang</h1>
+    <div class="qr"><img id="qrimg" alt="QR sẽ hiển thị ở đây"></div>
+    <div class="info">
+      <div class="row"><span>Ngân hàng:</span> <span>OCB</span> <button onclick="copyText('OCB')">Copy</button></div>
+      <div class="row"><span>Số TK:</span> <span id="accText">0030104444444444</span> <button onclick="copyText(document.getElementById('accText').innerText)">Copy</button></div>
+      <div class="row"><span>Số tiền:</span> <span id="amountText">—</span> <button onclick="copyText(document.getElementById('amountText').innerText)">Copy</button></div>
+      <div class="row"><span>Nội dung:</span> <span id="addInfo">—</span> <button onclick="copyText(document.getElementById('addInfo').innerText)">Copy</button></div>
+    </div>
+    <div class="row" style="margin-top:20px">
+      <input type="text" id="amount" placeholder="VD: 500.000" oninput="formatInput(this)">
+      <button class="makeQR" onclick="makeQR()">Tạo QR</button>
+    </div>
+  </div>
+
+<script>
+  const BANK = 'ocb';
+  const ACCOUNT = '0030104444444444';
+  let state = {url:'', amount:0, addInfo:''};
+
+  function formatInput(el){
+    let val = el.value.replace(/\D/g,'');
+    if(!val){ el.value=''; return; }
+    el.value = val.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  function parseAmount(val){
+    return Number(val.replace(/\./g,''));
+  }
+
+  function genAddInfo(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    const rand = Math.floor(1000 + Math.random()*9000);
+    return `HD${y}${m}${day}-${rand}`;
+  }
+
+  function makeQR(){
+    const raw = document.getElementById('amount').value;
+    const amount = parseAmount(raw);
+    if(!amount || amount<=0){ alert('Nhập số tiền hợp lệ'); return; }
+    const add = genAddInfo();
+    const base = `https://img.vietqr.io/image/${BANK}-${ACCOUNT}-qr_only.png`;
+    const url = `${base}?addInfo=${encodeURIComponent(add)}&amount=${encodeURIComponent(amount)}`;
+    document.getElementById('qrimg').src = url;
+    document.getElementById('addInfo').textContent = add;
+    document.getElementById('amountText').textContent = amount.toLocaleString('vi-VN') + " VND";
+    state = {url, amount, addInfo:add};
+  }
+
+  async function copyText(t){
+    try{ await navigator.clipboard.writeText(t); alert("Đã copy: " + t); }
+    catch{ alert("Không copy được"); }
+  }
+</script>
+</body>
+</html>
